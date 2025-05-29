@@ -1,0 +1,201 @@
+/* ESTILOS DE IMPRESSÃO */
+@media print {
+    /* RESET GERAL */
+    body {
+        background: white;
+        padding: 0;
+        margin: 0;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* CONFIGURAÇÃO DA PÁGINA */
+    @page {
+        size: A4;
+        margin: 12mm 12mm 25mm 12mm; /* Margem inferior maior para o rodapé */
+    }
+    
+    /* PÁGINA */
+    .page {
+        box-shadow: none;
+        margin: 0;
+        page-break-after: always;
+        min-height: auto;
+        height: auto;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        position: relative;
+        padding-bottom: 30mm; /* Espaço para o rodapé fixo */
+    }
+
+    .page:last-child {
+        page-break-after: avoid;
+    }
+    
+    /* OCULTAR ELEMENTOS DESNECESSÁRIOS */
+    .floating-controls,
+    .add-formula-btn, 
+    .print-btn,
+    .remove-formula-btn {
+        display: none !important;
+    }
+    
+    /* AJUSTAR CONTEÚDO */
+    .content {
+        padding: 15px 20px;
+    }
+    
+    /* OTIMIZAR ESPAÇO DAS FÓRMULAS */
+    .formula-section {
+        margin-bottom: 10px;
+        page-break-inside: avoid;
+    }
+    
+    .formula-header {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+    
+    .formula-content {
+        padding: 10px;
+    }
+    
+    .medication-item {
+        padding: 8px;
+    }
+    
+    .medication-composition {
+        min-height: auto;
+        font-size: 10px;
+    }
+    
+    .medication-instructions {
+        padding: 5px;
+        font-size: 10px;
+    }
+    
+    /* GARANTIR CORES NA IMPRESSÃO */
+    .header {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .prescription-title {
+        background: #2c5aa0 !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .formula-header {
+        background: #2c5aa0 !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .medication-instructions {
+        background: #e8f4f8 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .schedule-table th {
+        background: #2c5aa0 !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .warnings {
+        background: #fff3cd !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* RODAPÉ FIXO NA IMPRESSÃO */
+    .contact-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #2c5aa0 !important;
+        color: white !important;
+        padding: 8px 20px;
+        font-size: 10px;
+        text-align: center;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        z-index: 1000;
+    }
+    
+    /* AJUSTE DO CAMPO DE PACIENTE */
+    .patient-info {
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .patient-row {
+        margin-bottom: 5px;
+    }
+    
+    .field-label {
+        font-size: 12px;
+    }
+    
+    .field-value {
+        font-size: 12px;
+    }
+    
+    /* AJUSTE DE FONTES */
+    .doctor-name {
+        font-size: 20px;
+    }
+    
+    .specialty {
+        font-size: 14px;
+    }
+    
+    .credentials {
+        font-size: 12px;
+    }
+    
+    .prescription-title {
+        font-size: 14px;
+        padding: 8px 20px;
+    }
+    
+    /* CRONOGRAMA */
+    .schedule-table {
+        font-size: 11px;
+    }
+    
+    .schedule-table th,
+    .schedule-table td {
+        padding: 6px;
+    }
+    
+    /* ASSINATURA */
+    .signature-section-highlight {
+        padding: 25px;
+        margin: 20px 0;
+        page-break-inside: avoid;
+    }
+    
+    .signature-line-highlight {
+        height: 60px;
+        margin: 15px auto;
+    }
+    
+    /* ADVERTÊNCIAS */
+    .warnings {
+        page-break-inside: avoid;
+        margin: 10px 0;
+        padding: 12px;
+    }
+    
+    .warning-list {
+        font-size: 11px;
+        min-height: auto;
+    }
+}
