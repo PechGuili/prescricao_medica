@@ -73,6 +73,11 @@ body {
     page-break-after: avoid;
 }
 
+/* Página vazia não será exibida */
+.page.empty {
+    display: none;
+}
+
 /* CABEÇALHO */
 .header {
     padding: 15px 25px;
@@ -409,13 +414,13 @@ body {
     padding: 35px;
     margin: 30px 0;
     text-align: center;
-    min-height: 280px;
+    min-height: 200px;
 }
 
 .signature-line-highlight {
     border-bottom: 2px solid #2c5aa0;
     width: 300px;
-    height: 80px;
+    height: 60px;
     margin: 25px auto 20px;
 }
 
@@ -471,16 +476,17 @@ body {
     background: #f8f9fa;
 }
 
-.schedule-table input, .schedule-table textarea {
+.schedule-table textarea {
     border: none;
     background: transparent;
     width: 100%;
     text-align: center;
     resize: vertical;
     font-size: 11px;
+    min-height: 30px;
 }
 
-.schedule-table input:focus, .schedule-table textarea:focus {
+.schedule-table textarea:focus {
     outline: 1px solid #2c5aa0;
     background: rgba(44, 90, 160, 0.05);
 }
@@ -543,20 +549,8 @@ body {
     margin-top: auto;
 }
 
-.contact-footer input {
-    background: transparent;
-    border: none;
-    color: white;
-    text-align: center;
-    font-size: 11px;
-    width: auto;
-    min-width: 200px;
-    padding: 0 5px;
-}
-
-.contact-footer input:focus {
-    outline: 1px solid rgba(255,255,255,0.5);
-    background: rgba(255,255,255,0.1);
+.contact-footer span {
+    display: inline-block;
 }
 
 /* BOTÃO IMPRIMIR */
@@ -579,6 +573,211 @@ body {
 .print-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+/* ESTILOS DE IMPRESSÃO */
+@media print {
+    /* RESET GERAL */
+    body {
+        background: white;
+        padding: 0;
+        margin: 0;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* CONFIGURAÇÃO DA PÁGINA */
+    @page {
+        size: A4;
+        margin: 10mm 10mm 10mm 10mm;
+    }
+    
+    /* PÁGINA */
+    .page {
+        box-shadow: none;
+        margin: 0;
+        page-break-after: always;
+        min-height: auto;
+        height: auto;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .page:last-child {
+        page-break-after: avoid;
+    }
+    
+    /* Ocultar páginas vazias na impressão */
+    .page.empty {
+        display: none !important;
+    }
+    
+    /* OCULTAR ELEMENTOS DESNECESSÁRIOS */
+    .floating-controls,
+    .add-formula-btn, 
+    .print-btn,
+    .remove-formula-btn {
+        display: none !important;
+    }
+    
+    /* AJUSTAR CONTEÚDO */
+    .content {
+        padding: 15px 20px;
+        flex: 1;
+    }
+    
+    /* OTIMIZAR ESPAÇO DAS FÓRMULAS */
+    .formula-section {
+        margin-bottom: 10px;
+        page-break-inside: avoid;
+    }
+    
+    .formula-header {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+    
+    .formula-content {
+        padding: 10px;
+    }
+    
+    .medication-item {
+        padding: 8px;
+    }
+    
+    .medication-composition {
+        min-height: auto;
+        font-size: 10px;
+    }
+    
+    .medication-instructions {
+        padding: 5px;
+        font-size: 10px;
+    }
+    
+    /* GARANTIR CORES NA IMPRESSÃO */
+    .header {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .prescription-title {
+        background: #2c5aa0 !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .formula-header {
+        background: #2c5aa0 !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .medication-instructions {
+        background: #e8f4f8 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .schedule-table th {
+        background: #2c5aa0 !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .warnings {
+        background: #fff3cd !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* RODAPÉ VISÍVEL NA IMPRESSÃO */
+    .contact-footer {
+        position: relative;
+        bottom: auto;
+        background: #2c5aa0 !important;
+        color: white !important;
+        padding: 8px 20px;
+        font-size: 10px;
+        text-align: center;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        margin-top: auto;
+    }
+    
+    /* AJUSTE DO CAMPO DE PACIENTE */
+    .patient-info {
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .patient-row {
+        margin-bottom: 5px;
+    }
+    
+    .field-label {
+        font-size: 12px;
+    }
+    
+    .field-value {
+        font-size: 12px;
+    }
+    
+    /* AJUSTE DE FONTES */
+    .doctor-name {
+        font-size: 20px;
+    }
+    
+    .specialty {
+        font-size: 14px;
+    }
+    
+    .credentials {
+        font-size: 12px;
+    }
+    
+    .prescription-title {
+        font-size: 14px;
+        padding: 8px 20px;
+    }
+    
+    /* CRONOGRAMA */
+    .schedule-table {
+        font-size: 11px;
+    }
+    
+    .schedule-table th,
+    .schedule-table td {
+        padding: 6px;
+    }
+    
+    /* ASSINATURA */
+    .signature-section-highlight {
+        padding: 25px;
+        margin: 20px 0;
+        page-break-inside: avoid;
+    }
+    
+    .signature-line-highlight {
+        height: 60px;
+        margin: 15px auto;
+    }
+    
+    /* ADVERTÊNCIAS */
+    .warnings {
+        page-break-inside: avoid;
+        margin: 10px 0;
+        padding: 12px;
+    }
+    
+    .warning-list {
+        font-size: 11px;
+        min-height: auto;
+    }
 }
 
 /* RESPONSIVIDADE */
