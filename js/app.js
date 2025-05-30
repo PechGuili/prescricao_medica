@@ -1,16 +1,12 @@
 // VARIÁVEIS GLOBAIS
-let formulaCount = 5;
-let currentPage = 2;
+let formulaCount = 2;
 let actionHistory = [];
 let removedFormulas = [];
 
 // MAPEAMENTO DE FÓRMULAS PARA CRONOGRAMA
 const formulaSchedule = {
     1: { time: '8h00\n(manhã)', medication: '• 1 dose Fórmula Imuno-respiratória', observation: 'Com café da manhã' },
-    2: { time: '21h00\n(noite)', medication: '• 1 sachê Fórmula Sono e Relaxamento', observation: '1-2h antes de dormir, dissolver em 200ml água' },
-    3: { time: '12h00\n(almoço)', medication: '• 1 dose Fórmula Anti-inflamatória', observation: 'Com refeição' },
-    4: { time: '19h00\n(jantar)', medication: '• 1 dose Ômega-3 (2 comprimidos)', observation: 'Com refeição' },
-    5: { time: '8h00\n(manhã)', medication: '• 1 dose Vitamina D3 + K2 com TCM', observation: 'Com café da manhã' }
+    2: { time: '21h00\n(noite)', medication: '• 1 sachê Fórmula Sono e Relaxamento', observation: '1-2h antes de dormir, dissolver em 200ml água' }
 };
 
 // INICIALIZAÇÃO
@@ -18,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     syncDoctorData();
     updateSchedule();
     updateHistoryCounter();
+    checkEmptyPages();
 });
 
 // FUNÇÃO PARA ADICIONAR NOVA FÓRMULA
@@ -33,7 +30,7 @@ function addFormula() {
     const newFormulaHTML = createFormulaHTML(formulaCount);
     
     // Adicionar na página atual
-    const currentContainer = document.querySelector(`#page${currentPage} .formulas-container`);
+    const currentContainer = document.querySelector('.formulas-container');
     currentContainer.insertAdjacentHTML('beforeend', newFormulaHTML);
     
     // Adicionar ao cronograma
@@ -46,8 +43,8 @@ function addFormula() {
     // Sincronizar dados
     syncDoctorData();
     
-    // Reorganizar páginas se necessário
-    reorganizePages();
+    // Verificar páginas vazias
+    checkEmptyPages();
 }
 
 // FUNÇÃO PARA REMOVER FÓRMULA
@@ -80,8 +77,8 @@ function removeFormula(formulaId) {
     removedFormulas.push(formulaData);
     updateHistoryCounter();
     
-    // Reorganizar páginas
-    reorganizePages();
+    // Verificar páginas vazias
+    checkEmptyPages();
 }
 
 // FUNÇÃO PARA DESFAZER ÚLTIMA AÇÃO
@@ -108,7 +105,7 @@ function undoLastAction() {
     }
     
     updateHistoryCounter();
-    reorganizePages();
+    checkEmptyPages();
 }
 
 // FUNÇÃO PARA RESTAURAR FÓRMULA REMOVIDA
@@ -126,13 +123,11 @@ function restoreFormula(formulaData) {
     }
     
     // Inserir no DOM
+    const container = document.querySelector('.formulas-container');
     if (insertBefore) {
         insertBefore.insertAdjacentHTML('beforebegin', formulaData.html);
     } else {
-        // Inserir no final da última página com fórmulas
-        const containers = document.querySelectorAll('.formulas-container');
-        const lastContainer = containers[containers.length - 1];
-        lastContainer.insertAdjacentHTML('beforeend', formulaData.html);
+        container.insertAdjacentHTML('beforeend', formulaData.html);
     }
     
     // Restaurar no cronograma
@@ -142,31 +137,21 @@ function restoreFormula(formulaData) {
     }
 }
 
-// FUNÇÃO PARA REORGANIZAR PÁGINAS
-function reorganizePages() {
-    const allFormulas = Array.from(document.querySelectorAll('.formula-section'));
+// FUNÇÃO PARA VERIFICAR PÁGINAS VAZIAS
+function checkEmptyPages() {
+    const pages = document.querySelectorAll('.page');
     
-    // Limpar todas as páginas de fórmulas
-    document.querySelectorAll('.formulas-container').forEach(container => {
-        container.innerHTML = '';
-    });
-    
-    // Redistribuir fórmulas
-    let pageIndex = 0;
-    let formulasInPage = 0;
-    const maxPerPage = [2, 3, 2]; // Página 1: 2, Página 2: 3, demais: 2
-    
-    allFormulas.forEach(formula => {
-        const containers = document.querySelectorAll('.formulas-container');
+    pages.forEach(page => {
+        const hasFormulas = page.querySelector('.formula-section');
+        const hasSchedule = page.querySelector('.schedule-table');
+        const hasSignature = page.querySelector('.signature-section-highlight');
+        const hasWarnings = page.querySelector('.warnings');
         
-        if (formulasInPage >= (maxPerPage[pageIndex] || 2)) {
-            pageIndex++;
-            formulasInPage = 0;
-        }
-        
-        if (pageIndex < containers.length) {
-            containers[pageIndex].appendChild(formula);
-            formulasInPage++;
+        // Se a página tem apenas cabeçalho e rodapé, marcar como vazia
+        if (!hasFormulas && !hasSchedule && !hasSignature && !hasWarnings) {
+            page.classList.add('empty');
+        } else {
+            page.classList.remove('empty');
         }
     });
 }
@@ -228,7 +213,7 @@ function updateSchedule() {
 // ADICIONAR LINHA AO CRONOGRAMA
 function addScheduleRow(formulaNumber) {
     const timeSlots = ['9h00', '10h00', '11h00', '14h00', '15h00', '16h00', '17h00', '18h00', '20h00', '22h00'];
-    const timeIndex = formulaNumber - 6;
+    const timeIndex = formulaNumber - 3;
     
     formulaSchedule[formulaNumber] = {
         time: `${timeSlots[timeIndex] || (8 + timeIndex) + 'h00'}\n(horário)`,
@@ -243,12 +228,6 @@ function addScheduleRow(formulaNumber) {
 function removeScheduleRow(formulaId) {
     delete formulaSchedule[formulaId];
     updateSchedule();
-}
-
-// MOSTRAR PÁGINA DO CRONOGRAMA
-function showSchedulePage() {
-    document.getElementById('schedulePage').style.display = 'flex';
-    document.getElementById('schedulePage').scrollIntoView({ behavior: 'smooth' });
 }
 
 // SINCRONIZAR DADOS DO MÉDICO
@@ -305,4 +284,9 @@ document.addEventListener('input', function(e) {
     if (e.target.matches('input, textarea')) {
         setTimeout(saveState, 500);
     }
+});
+
+// FUNÇÃO ESPECIAL PARA IMPRESSÃO
+window.addEventListener('beforeprint', function() {
+    checkEmptyPages();
 });
