@@ -4,8 +4,813 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prescrição Médica - Dr. Guili Pech</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="pint.css">
+    <style>
+        /* RESET E BASE */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f8f9fa;
+            padding: 10mm;
+            color: #333;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* CONTROLES FLUTUANTES */
+        .floating-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .undo-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .undo-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(238, 90, 36, 0.3);
+        }
+
+        .undo-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .history-info {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* PÁGINA */
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto 20px;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: relative;
+            page-break-after: always;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page:last-child {
+            page-break-after: avoid;
+        }
+
+        /* Página vazia não será exibida */
+        .page.empty {
+            display: none;
+        }
+
+        /* CABEÇALHO */
+        .header {
+            padding: 15px 25px;
+            border-bottom: 3px solid #2c5aa0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            flex-shrink: 0;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .doctor-logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c5aa0;
+            background: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #2c5aa0;
+        }
+
+        .doctor-info {
+            flex: 1;
+            margin-left: 20px;
+        }
+
+        .doctor-name {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2c5aa0;
+            margin-bottom: 3px;
+            border: none;
+            background: transparent;
+            width: 100%;
+        }
+
+        .doctor-name:focus {
+            outline: 2px solid #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .specialty {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 2px;
+            border: none;
+            background: transparent;
+            width: 100%;
+        }
+
+        .specialty:focus {
+            outline: 2px solid #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .credentials {
+            font-size: 13px;
+            color: #888;
+            border: none;
+            background: transparent;
+            width: 100%;
+        }
+
+        .credentials:focus {
+            outline: 2px solid #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .prescription-title {
+            background: #2c5aa0 !important;
+            color: white !important;
+            padding: 10px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .prescription-title input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+        }
+
+        .prescription-title input:focus {
+            outline: 1px solid rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* CONTEÚDO */
+        .content {
+            padding: 20px 25px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* INFORMAÇÕES DO PACIENTE */
+        .patient-info {
+            background: #f8f9fa;
+            border-left: 4px solid #2c5aa0;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .patient-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 8px;
+        }
+
+        .patient-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .patient-field {
+            display: flex;
+            align-items: center;
+        }
+
+        .field-label {
+            font-weight: bold;
+            color: #2c5aa0;
+            margin-right: 8px;
+            min-width: 70px;
+            font-size: 13px;
+        }
+
+        .field-value {
+            color: #555;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-size: 13px;
+            padding: 2px 5px;
+            border-bottom: 1px dashed #ccc;
+            flex: 1;
+        }
+
+        .field-value:focus {
+            border-bottom-color: #2c5aa0;
+            background: rgba(44, 90, 160, 0.05);
+            outline: 1px solid #2c5aa0;
+        }
+
+        /* CONTAINER DE FÓRMULAS */
+        .formulas-container {
+            margin-top: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* SEÇÃO DE FÓRMULA */
+        .formula-section {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            flex: 0 0 auto;
+        }
+
+        /* BOTÃO REMOVER FÓRMULA */
+        .remove-formula-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-formula-btn:hover {
+            background: #c82333;
+            transform: scale(1.1);
+        }
+
+        /* CABEÇALHO DA FÓRMULA */
+        .formula-header {
+            background: #2c5aa0 !important;
+            color: white !important;
+            padding: 8px 40px 8px 15px;
+            font-weight: bold;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .formula-header input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .formula-header input:focus {
+            outline: 1px solid rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* CONTEÚDO DA FÓRMULA */
+        .formula-content {
+            padding: 12px;
+        }
+
+        .medication-item {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 10px;
+            border-left: 3px solid #28a745;
+        }
+
+        .medication-name {
+            font-weight: bold;
+            color: #2c5aa0;
+            font-size: 13px;
+            margin-bottom: 5px;
+            border: none;
+            background: transparent;
+            width: 100%;
+        }
+
+        .medication-name:focus {
+            outline: 1px solid #2c5aa0;
+            background: rgba(44, 90, 160, 0.05);
+        }
+
+        .medication-composition {
+            font-size: 11px;
+            color: #666;
+            line-height: 1.3;
+            margin-bottom: 6px;
+            border: none;
+            background: transparent;
+            width: 100%;
+            min-height: 40px;
+            resize: vertical;
+        }
+
+        .medication-composition:focus {
+            outline: 1px solid #2c5aa0;
+            background: rgba(44, 90, 160, 0.05);
+        }
+
+        .medication-instructions {
+            background: #e8f4f8 !important;
+            padding: 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: #2c5aa0;
+        }
+
+        .posology {
+            font-weight: bold;
+            color: #dc3545;
+            margin-bottom: 3px;
+            border: none;
+            background: transparent;
+            width: 100%;
+            font-size: 11px;
+        }
+
+        .posology:focus {
+            outline: 1px solid #dc3545;
+            background: rgba(220, 53, 69, 0.05);
+        }
+
+        .duration, .notes {
+            border: none;
+            background: transparent;
+            width: 100%;
+            margin-bottom: 2px;
+            font-size: 11px;
+        }
+
+        .duration:focus, .notes:focus {
+            outline: 1px solid #2c5aa0;
+            background: rgba(44, 90, 160, 0.05);
+        }
+
+        /* BOTÃO ADICIONAR FÓRMULA */
+        .add-formula-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 15px 0;
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.2);
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 250px;
+        }
+
+        .add-formula-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        /* ASSINATURA DESTACADA */
+        .signature-section-highlight {
+            background: #f8f9fa;
+            border: 2px solid #2c5aa0;
+            border-radius: 8px;
+            padding: 35px;
+            margin: 30px 0;
+            text-align: center;
+            min-height: 200px;
+        }
+
+        .signature-line-highlight {
+            border-bottom: 2px solid #2c5aa0;
+            width: 300px;
+            height: 60px;
+            margin: 25px auto 20px;
+        }
+
+        .doctor-details-highlight {
+            margin-top: 15px;
+        }
+
+        .doctor-details-highlight input {
+            font-size: 14px;
+            color: #2c5aa0;
+            border: none;
+            background: transparent;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .doctor-details-highlight input:focus {
+            outline: 1px solid #2c5aa0;
+            background: rgba(44, 90, 160, 0.05);
+        }
+
+        .signature-date {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #2c5aa0;
+            font-style: italic;
+        }
+
+        /* CRONOGRAMA */
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 12px;
+        }
+
+        .schedule-table th,
+        .schedule-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .schedule-table th {
+            background: #2c5aa0 !important;
+            color: white !important;
+            font-weight: bold;
+        }
+
+        .schedule-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .schedule-table textarea {
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: center;
+            resize: vertical;
+            font-size: 11px;
+            min-height: 30px;
+        }
+
+        .schedule-table textarea:focus {
+            outline: 1px solid #2c5aa0;
+            background: rgba(44, 90, 160, 0.05);
+        }
+
+        /* ADVERTÊNCIAS */
+        .warnings {
+            background: #fff3cd !important;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .warning-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            border: none;
+            background: transparent;
+            width: 100%;
+        }
+
+        .warning-title:focus {
+            outline: 1px solid #856404;
+            background: rgba(133, 100, 4, 0.05);
+        }
+
+        .warning-title::before {
+            content: "⚠️";
+            margin-right: 8px;
+        }
+
+        .warning-list {
+            font-size: 12px;
+            color: #856404;
+            line-height: 1.4;
+            border: none;
+            background: transparent;
+            width: 100%;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .warning-list:focus {
+            outline: 1px solid #856404;
+            background: rgba(133, 100, 4, 0.05);
+        }
+
+        /* RODAPÉ COM ENDEREÇO */
+        .contact-footer {
+            background: #2c5aa0 !important;
+            color: white !important;
+            padding: 12px 30px;
+            text-align: center;
+            font-size: 11px;
+            line-height: 1.5;
+            flex-shrink: 0;
+            margin-top: auto;
+        }
+
+        .contact-footer span {
+            display: inline-block;
+        }
+
+        /* BOTÃO IMPRIMIR */
+        .print-btn {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 15px auto;
+            box-shadow: 0 3px 10px rgba(0, 123, 255, 0.2);
+            transition: all 0.3s ease;
+            display: block;
+            width: 180px;
+        }
+
+        .print-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        /* ESTILOS DE IMPRESSÃO */
+        @media print {
+            /* RESET GERAL */
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            /* CONFIGURAÇÃO DA PÁGINA */
+            @page {
+                size: A4;
+                margin: 10mm 10mm 10mm 10mm;
+            }
+            
+            /* PÁGINA */
+            .page {
+                box-shadow: none;
+                margin: 0;
+                page-break-after: always;
+                min-height: auto;
+                height: auto;
+                position: relative;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .page:last-child {
+                page-break-after: avoid;
+            }
+            
+            /* Ocultar páginas vazias na impressão */
+            .page.empty {
+                display: none !important;
+            }
+            
+            /* OCULTAR ELEMENTOS DESNECESSÁRIOS */
+            .floating-controls,
+            .add-formula-btn, 
+            .print-btn,
+            .remove-formula-btn {
+                display: none !important;
+            }
+            
+            /* AJUSTAR CONTEÚDO */
+            .content {
+                padding: 15px 20px;
+                flex: 1;
+            }
+            
+            /* OTIMIZAR ESPAÇO DAS FÓRMULAS */
+            .formula-section {
+                margin-bottom: 10px;
+                page-break-inside: avoid;
+            }
+            
+            .formula-header {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+            
+            .formula-content {
+                padding: 10px;
+            }
+            
+            .medication-item {
+                padding: 8px;
+            }
+            
+            .medication-composition {
+                min-height: auto;
+                font-size: 10px;
+            }
+            
+            .medication-instructions {
+                padding: 5px;
+                font-size: 10px;
+            }
+            
+            /* GARANTIR CORES NA IMPRESSÃO */
+            .header {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .prescription-title {
+                background: #2c5aa0 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .formula-header {
+                background: #2c5aa0 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .medication-instructions {
+                background: #e8f4f8 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .schedule-table th {
+                background: #2c5aa0 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .warnings {
+                background: #fff3cd !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            /* RODAPÉ VISÍVEL NA IMPRESSÃO */
+            .contact-footer {
+                position: relative;
+                bottom: auto;
+                background: #2c5aa0 !important;
+                color: white !important;
+                padding: 8px 20px;
+                font-size: 10px;
+                text-align: center;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                margin-top: auto;
+            }
+            
+            /* AJUSTE DO CAMPO DE PACIENTE */
+            .patient-info {
+                padding: 10px;
+                margin-bottom: 10px;
+            }
+            
+            .patient-row {
+                margin-bottom: 5px;
+            }
+            
+            .field-label {
+                font-size: 12px;
+            }
+            
+            .field-value {
+                font-size: 12px;
+            }
+            
+            /* AJUSTE DE FONTES */
+            .doctor-name {
+                font-size: 20px;
+            }
+            
+            .specialty {
+                font-size: 14px;
+            }
+            
+            .credentials {
+                font-size: 12px;
+            }
+            
+            .prescription-title {
+                font-size: 14px;
+                padding: 8px 20px;
+            }
+            
+            /* CRONOGRAMA */
+            .schedule-table {
+                font-size: 11px;
+            }
+            
+            .schedule-table th,
+            .schedule-table td {
+                padding: 6px;
+            }
+            
+            /* ASSINATURA */
+            .signature-section-highlight {
+                padding: 25px;
+                margin: 20px 0;
+                page-break-inside: avoid;
+            }
+            
+            .signature-line-highlight {
+                height: 60px;
+                margin: 15px auto;
+            }
+            
+            /* ADVERTÊNCIAS */
+            .warnings {
+                page-break-inside: avoid;
+                margin: 10px 0;
+                padding: 12px;
+            }
+            
+            .warning-list {
+                font-size: 11px;
+                min-height: auto;
+            }
+        }
+
+        /* RESPONSIVIDADE */
+        @media (max-width: 768px) {
+            .patient-row {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .doctor-info {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+
+            .floating-controls {
+                top: 10px;
+                right: 10px;
+                padding: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- CONTROLES FLUTUANTES -->
@@ -184,6 +989,299 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        // VARIÁVEIS GLOBAIS
+        let formulaCount = 2;
+        let actionHistory = [];
+        let removedFormulas = [];
+
+        // MAPEAMENTO DE FÓRMULAS PARA CRONOGRAMA
+        const formulaSchedule = {
+            1: { time: '8h00\n(manhã)', medication: '• 1 dose Fórmula Imuno-respiratória', observation: 'Com café da manhã' },
+            2: { time: '21h00\n(noite)', medication: '• 1 sachê Fórmula Sono e Relaxamento', observation: '1-2h antes de dormir, dissolver em 200ml água' }
+        };
+
+        // INICIALIZAÇÃO
+        document.addEventListener('DOMContentLoaded', function() {
+            syncDoctorData();
+            updateSchedule();
+            updateHistoryCounter();
+            checkEmptyPages();
+        });
+
+        // FUNÇÃO PARA ADICIONAR NOVA FÓRMULA
+        function addFormula() {
+            formulaCount++;
+            
+            const action = {
+                type: 'add',
+                formulaId: formulaCount,
+                timestamp: Date.now()
+            };
+            
+            const newFormulaHTML = createFormulaHTML(formulaCount);
+            
+            // Adicionar na página atual
+            const currentContainer = document.querySelector('.formulas-container');
+            currentContainer.insertAdjacentHTML('beforeend', newFormulaHTML);
+            
+            // Adicionar ao cronograma
+            addScheduleRow(formulaCount);
+            
+            // Salvar ação no histórico
+            actionHistory.push(action);
+            updateHistoryCounter();
+            
+            // Sincronizar dados
+            syncDoctorData();
+            
+            // Verificar páginas vazias
+            checkEmptyPages();
+        }
+
+        // FUNÇÃO PARA REMOVER FÓRMULA
+        function removeFormula(formulaId) {
+            const formula = document.querySelector(`[data-formula-id="${formulaId}"]`);
+            if (!formula) return;
+            
+            // Salvar dados da fórmula antes de remover
+            const formulaData = {
+                id: formulaId,
+                html: formula.outerHTML,
+                scheduleData: formulaSchedule[formulaId] || null
+            };
+            
+            // Remover do DOM
+            formula.remove();
+            
+            // Remover do cronograma
+            removeScheduleRow(formulaId);
+            
+            // Salvar ação no histórico
+            const action = {
+                type: 'remove',
+                formulaId: formulaId,
+                formulaData: formulaData,
+                timestamp: Date.now()
+            };
+            
+            actionHistory.push(action);
+            removedFormulas.push(formulaData);
+            updateHistoryCounter();
+            
+            // Verificar páginas vazias
+            checkEmptyPages();
+        }
+
+        // FUNÇÃO PARA DESFAZER ÚLTIMA AÇÃO
+        function undoLastAction() {
+            if (actionHistory.length === 0) return;
+            
+            const lastAction = actionHistory.pop();
+            
+            switch(lastAction.type) {
+                case 'add':
+                    // Remover a fórmula adicionada
+                    const addedFormula = document.querySelector(`[data-formula-id="${lastAction.formulaId}"]`);
+                    if (addedFormula) {
+                        addedFormula.remove();
+                        removeScheduleRow(lastAction.formulaId);
+                    }
+                    formulaCount--;
+                    break;
+                    
+                case 'remove':
+                    // Restaurar a fórmula removida
+                    restoreFormula(lastAction.formulaData);
+                    break;
+            }
+            
+            updateHistoryCounter();
+            checkEmptyPages();
+        }
+
+        // FUNÇÃO PARA RESTAURAR FÓRMULA REMOVIDA
+        function restoreFormula(formulaData) {
+            // Encontrar o lugar correto para inserir
+            const allFormulas = document.querySelectorAll('.formula-section');
+            let insertBefore = null;
+            
+            for (let formula of allFormulas) {
+                const id = parseInt(formula.getAttribute('data-formula-id'));
+                if (id > formulaData.id) {
+                    insertBefore = formula;
+                    break;
+                }
+            }
+            
+            // Inserir no DOM
+            const container = document.querySelector('.formulas-container');
+            if (insertBefore) {
+                insertBefore.insertAdjacentHTML('beforebegin', formulaData.html);
+            } else {
+                container.insertAdjacentHTML('beforeend', formulaData.html);
+            }
+            
+            // Restaurar no cronograma
+            if (formulaData.scheduleData) {
+                formulaSchedule[formulaData.id] = formulaData.scheduleData;
+                updateSchedule();
+            }
+        }
+
+        // FUNÇÃO PARA VERIFICAR PÁGINAS VAZIAS
+        function checkEmptyPages() {
+            const pages = document.querySelectorAll('.page');
+            
+            pages.forEach(page => {
+                const hasFormulas = page.querySelector('.formula-section');
+                const hasSchedule = page.querySelector('.schedule-table');
+                const hasSignature = page.querySelector('.signature-section-highlight');
+                const hasWarnings = page.querySelector('.warnings');
+                
+                // Se a página tem apenas cabeçalho e rodapé, marcar como vazia
+                if (!hasFormulas && !hasSchedule && !hasSignature && !hasWarnings) {
+                    page.classList.add('empty');
+                } else {
+                    page.classList.remove('empty');
+                }
+            });
+        }
+
+        // CRIAR HTML DE NOVA FÓRMULA
+        function createFormulaHTML(number) {
+            return `
+                <div class="formula-section" data-formula-id="${number}">
+                    <button class="remove-formula-btn" onclick="removeFormula(${number})" title="Remover esta fórmula">
+                        ❌
+                    </button>
+                    <div class="formula-header">
+                        <input type="text" value="${number}️⃣ NOVA FÓRMULA" placeholder="Nome da fórmula">
+                    </div>
+                    <div class="formula-content">
+                        <div class="medication-item">
+                            <input type="text" class="medication-name" value="Manipular em comprimidos:" placeholder="Tipo de manipulação">
+                            <textarea class="medication-composition" placeholder="Digite a composição da fórmula">• Ativo principal .......................... 250mg
+• Ativo secundário ................... 100mg
+• Excipiente qsp ....................... 1 comprimido</textarea>
+                            <div class="medication-instructions">
+                                <input type="text" class="posology" value="Posologia: 1 dose por dia conforme orientação médica" placeholder="Posologia">
+                                <input type="text" class="duration" value="Duração: Uso contínuo - Manipular para 1 mês" placeholder="Duração do tratamento">
+                                <input type="text" class="notes" value="Tomar preferencialmente com refeições" placeholder="Observações">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ATUALIZAR CRONOGRAMA
+        function updateSchedule() {
+            const scheduleTableBody = document.getElementById('scheduleTableBody');
+            scheduleTableBody.innerHTML = '';
+            
+            // Ordenar por horário
+            const sortedSchedule = Object.entries(formulaSchedule)
+                .filter(([id]) => document.querySelector(`[data-formula-id="${id}"]`))
+                .sort((a, b) => {
+                    const timeA = parseInt(a[1].time.match(/\d+/)[0]);
+                    const timeB = parseInt(b[1].time.match(/\d+/)[0]);
+                    return timeA - timeB;
+                });
+            
+            // Adicionar linhas
+            sortedSchedule.forEach(([id, data]) => {
+                const rowHTML = `
+                    <tr data-schedule-id="${id}">
+                        <td><textarea>${data.time}</textarea></td>
+                        <td><textarea>${data.medication}</textarea></td>
+                        <td><textarea>${data.observation}</textarea></td>
+                    </tr>
+                `;
+                scheduleTableBody.insertAdjacentHTML('beforeend', rowHTML);
+            });
+        }
+
+        // ADICIONAR LINHA AO CRONOGRAMA
+        function addScheduleRow(formulaNumber) {
+            const timeSlots = ['9h00', '10h00', '11h00', '14h00', '15h00', '16h00', '17h00', '18h00', '20h00', '22h00'];
+            const timeIndex = formulaNumber - 3;
+            
+            formulaSchedule[formulaNumber] = {
+                time: `${timeSlots[timeIndex] || (8 + timeIndex) + 'h00'}\n(horário)`,
+                medication: `• 1 dose ${formulaNumber}ª Fórmula`,
+                observation: 'Conforme orientação médica'
+            };
+            
+            updateSchedule();
+        }
+
+        // REMOVER LINHA DO CRONOGRAMA
+        function removeScheduleRow(formulaId) {
+            delete formulaSchedule[formulaId];
+            updateSchedule();
+        }
+
+        // SINCRONIZAR DADOS DO MÉDICO
+        function syncDoctorData() {
+            const doctorInputs = document.querySelectorAll('.doctor-name, .specialty, .credentials');
+            
+            doctorInputs.forEach((input) => {
+                input.addEventListener('input', function() {
+                    const className = this.className;
+                    const allSimilar = document.querySelectorAll('.' + className);
+                    
+                    allSimilar.forEach(similarInput => {
+                        if (similarInput !== this) {
+                            similarInput.value = this.value;
+                        }
+                    });
+                });
+            });
+        }
+
+        // ATUALIZAR CONTADOR DE HISTÓRICO
+        function updateHistoryCounter() {
+            const counter = document.getElementById('historyCounter');
+            counter.textContent = `${actionHistory.length} ações`;
+            
+            const undoBtn = document.querySelector('.undo-btn');
+            undoBtn.disabled = actionHistory.length === 0;
+        }
+
+        // SALVAR ESTADO AUTOMATICAMENTE
+        function saveState() {
+            const state = {
+                formulaCount: formulaCount,
+                actionHistory: actionHistory,
+                removedFormulas: removedFormulas,
+                formulaSchedule: formulaSchedule,
+                pageContent: document.documentElement.innerHTML
+            };
+            
+            localStorage.setItem('prescriptionState', JSON.stringify(state));
+        }
+
+        // RESTAURAR ESTADO
+        function restoreState() {
+            const savedState = localStorage.getItem('prescriptionState');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                // Implementar restauração se necessário
+            }
+        }
+
+        // AUTO-SAVE A CADA MUDANÇA
+        document.addEventListener('input', function(e) {
+            if (e.target.matches('input, textarea')) {
+                setTimeout(saveState, 500);
+            }
+        });
+
+        // FUNÇÃO ESPECIAL PARA IMPRESSÃO
+        window.addEventListener('beforeprint', function() {
+            checkEmptyPages();
+        });
+    </script>
 </body>
 </html>
